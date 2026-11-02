@@ -6,9 +6,11 @@ import javax.swing.table.DefaultTableModel;
 
 /** Helper tampilan agar seluruh form seragam. */
 public final class UI {
-    public static final Color PRIMARY = new Color(0x1E88E5), DARK = new Color(0x263238),
-            DANGER = new Color(0xE53935), OK = new Color(0x43A047),
-            WARN = new Color(0xF9A825), BG = new Color(0xF5F7FA);
+    public static final Color PRIMARY = new Color(0x2563EB), DARK = new Color(0x0F172A),
+            DANGER = new Color(0xDC2626), OK = new Color(0x16A34A),
+            WARN = new Color(0xF59E0B), BG = new Color(0xF1F5F9),
+            SURFACE = Color.WHITE, TEXT_MUTED = new Color(0x64748B),
+            BORDER = new Color(0xD7E3F8);
     public static final Font BOLD = new Font("SansSerif", Font.BOLD, 13);
 
     private UI() { }
@@ -20,6 +22,26 @@ public final class UI {
         b.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 14));
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return b;
+    }
+
+    /** Kolom isian dengan garis tepi tipis dan jarak dalam yang lega. */
+    public static JTextField textField() {
+        JTextField f = new JTextField();
+        styleInput(f);
+        return f;
+    }
+
+    public static JPasswordField passwordField() {
+        JPasswordField f = new JPasswordField();
+        styleInput(f);
+        return f;
+    }
+
+    private static void styleInput(JTextField f) {
+        f.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        f.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER, 1),
+                BorderFactory.createEmptyBorder(9, 10, 9, 10)));
     }
 
     public static JLabel title(String t) {

@@ -1,19 +1,16 @@
 package com.storemate.view;
 
-import com.storemate.dao.ProductDAO;
-import com.storemate.dao.ReportDAO;
+import com.storemate.controller.ReportController;
 import com.storemate.model.Product;
 import com.storemate.util.*;
 import java.awt.*;
-import java.util.Calendar;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
-/** Dashboard Admin: ringkasan hari ini, grafik penjualan bulanan, alert stok menipis. */
+/** VIEW Dashboard Admin. Semua data diminta dari ReportController. */
 public class DashboardPanel extends JPanel implements Refreshable {
-    private final ReportDAO reportDAO = new ReportDAO();
-    private final ProductDAO productDAO = new ProductDAO();
+    private final ReportController controller = new ReportController();
     private final JLabel lblSales = new JLabel("-"), lblTrx = new JLabel("-"), lblLow = new JLabel("-");
     private final JLabel lblAlert = new JLabel(" ");
     private final BarChart chart = new BarChart();
@@ -35,7 +32,6 @@ public class DashboardPanel extends JPanel implements Refreshable {
         stats.add(card("Barang Stok Menipis", lblLow, UI.DANGER));
         top.add(stats, BorderLayout.CENTER);
 
-        // Alert stok: warna mencolok
         lblAlert.setOpaque(true);
         lblAlert.setFont(UI.BOLD);
         lblAlert.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
@@ -64,12 +60,12 @@ public class DashboardPanel extends JPanel implements Refreshable {
 
     @Override public void refresh() {
         try {
-            lblSales.setText(Fmt.rp(reportDAO.todaySales()));
-            lblTrx.setText(String.valueOf(reportDAO.todayTransactions()));
-            chart.data = reportDAO.monthlySales(Calendar.getInstance().get(Calendar.YEAR));
+            lblSales.setText(Fmt.rp(controller.todaySales()));
+            lblTrx.setText(String.valueOf(controller.todayTransactions()));
+            chart.data = controller.monthlySalesThisYear();
             chart.repaint();
 
-            List<Product> low = productDAO.findLowStock();
+            List<Product> low = controller.lowStock();
             lowModel.setRowCount(0);
             for (Product p : low) lowModel.addRow(new Object[]{p.code, p.name, p.stock, p.minStock});
             lblLow.setText(String.valueOf(low.size()));

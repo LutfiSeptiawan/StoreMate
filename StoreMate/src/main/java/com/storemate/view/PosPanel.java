@@ -1,24 +1,21 @@
 package com.storemate.view;
 
-import com.storemate.dao.ProductDAO;
-import com.storemate.dao.SaleDAO;
+import com.storemate.controller.PosController;
 import com.storemate.model.CartItem;
 import com.storemate.model.Product;
+import com.storemate.model.Receipt;
 import com.storemate.util.*;
 import java.awt.*;
 import java.awt.print.PrinterException;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 
-/** Kasir (POS): grid produk di kiri, keranjang & pembayaran di kanan. */
+/** VIEW Kasir (POS). Keranjang & pembayaran dikelola PosController; panel ini hanya menampilkan. */
 public class PosPanel extends JPanel implements Refreshable {
-    private final ProductDAO productDAO = new ProductDAO();
-    private final SaleDAO saleDAO = new SaleDAO();
-    private final List<CartItem> cart = new ArrayList<>();
+    private final PosController controller = new PosController();
 
     private final JTextField txtSearch = new JTextField(20);
     private final JPanel grid = new JPanel(new GridLayout(0, 3, 8, 8));
@@ -46,7 +43,7 @@ public class PosPanel extends JPanel implements Refreshable {
         left.add(search, BorderLayout.NORTH);
 
         JPanel wrap = new JPanel(new BorderLayout());
-        wrap.add(grid, BorderLayout.NORTH);                 // agar tombol tidak melar vertikal
+        wrap.add(grid, BorderLayout.NORTH);
         JScrollPane sp = new JScrollPane(wrap);
         sp.getVerticalScrollBar().setUnitIncrement(16);
         left.add(sp, BorderLayout.CENTER);
@@ -66,7 +63,7 @@ public class PosPanel extends JPanel implements Refreshable {
         plus.addActionListener(e -> changeQty(1));
         minus.addActionListener(e -> changeQty(-1));
         rem.addActionListener(e -> removeSelected());
-        clr.addActionListener(e -> { cart.clear(); refreshCart(); });
+        clr.addActionListener(e -> { controller.clear(); refreshCart(); });
         qtyBtns.add(plus); qtyBtns.add(minus); qtyBtns.add(rem); qtyBtns.add(clr);
 
         lblTotal.setFont(new Font("SansSerif", Font.BOLD, 28)); lblTotal.setForeground(UI.PRIMARY);
@@ -100,7 +97,7 @@ public class PosPanel extends JPanel implements Refreshable {
     private void loadProducts() {
         try {
             grid.removeAll();
-            for (Product p : productDAO.findAll(txtSearch.getText())) {
+            for (Product p : controller.products(txtSearch.getText())) {
                 // Tombol produk: FOTO di atas, lalu NAMA, HARGA, dan stok kecil
                 JButton b = new JButton("<html><center><b>" + p.name + "</b><br>" + Fmt.rp(p.sellPrice)
                         + "<br><small>Stok: " + p.stock + (p.isLowStock() ? " (menipis)" : "") + "</small></center></html>",
@@ -110,7 +107,7 @@ public class PosPanel extends JPanel implements Refreshable {
                 b.setPreferredSize(new Dimension(150, 150));
                 b.setBackground(p.stock <= 0 ? Color.LIGHT_GRAY : p.isLowStock() ? new Color(0xFFCDD2) : Color.WHITE);
                 b.setOpaque(true);
-                b.setEnabled(p.stock > 0);                  // stok habis tidak bisa dijual
+                b.setEnabled(p.stock > 0);
                 b.addActionListener(e -> addToCart(p));
                 grid.add(b);
             }
@@ -122,110 +119,68 @@ public class PosPanel extends JPanel implements Refreshable {
 
     // ---------------------------------------------------------- keranjang
     private void addToCart(Product p) {
-        for (CartItem it : cart) {
-            if (it.product.id == p.id) {
-                if (it.qty + 1 > p.stock) { UI.warn(this, "Stok " + p.name + " hanya " + p.stock + "."); return; }
-                it.qty++; refreshCart(); return;
-            }
-        }
-        cart.add(new CartItem(p, 1));
-        refreshCart();
+        try { controller.add(p); refreshCart(); }
+        catch (IllegalStateException e) { UI.warn(this, e.getMessage()); }
     }
 
     private void changeQty(int d) {
         int row = cartTable.getSelectedRow();
         if (row < 0) return;
-        CartItem it = cart.get(row);
-        int nq = it.qty + d;
-        if (nq <= 0) { cart.remove(row); }
-        else if (nq > it.product.stock) { UI.warn(this, "Stok " + it.product.name + " hanya " + it.product.stock + "."); return; }
-        else it.qty = nq;
+        try { controller.changeQty(row, d); }
+        catch (IllegalStateException e) { UI.warn(this, e.getMessage()); return; }
         refreshCart();
-        if (row < cart.size()) cartTable.setRowSelectionInterval(row, row);
+        if (row < controller.cart().size()) cartTable.setRowSelectionInterval(row, row);
     }
 
     private void removeSelected() {
         int row = cartTable.getSelectedRow();
-        if (row >= 0) { cart.remove(row); refreshCart(); }
-    }
-
-    private double total() {
-        double t = 0;
-        for (CartItem it : cart) t += it.subtotal();
-        return t;
+        if (row >= 0) { controller.remove(row); refreshCart(); }
     }
 
     private void refreshCart() {
         cartModel.setRowCount(0);
-        for (CartItem it : cart)
+        for (CartItem it : controller.cart())
             cartModel.addRow(new Object[]{it.product.name, Fmt.rp(it.product.sellPrice), it.qty, Fmt.rp(it.subtotal())});
-        lblTotal.setText(Fmt.rp(total()));     // total dihitung otomatis
+        lblTotal.setText(Fmt.rp(controller.total()));
         onMethodChanged();
     }
 
     private void onMethodChanged() {
         boolean transfer = "TRANSFER".equals(cbMethod.getSelectedItem());
         txtPaid.setEnabled(!transfer);
-        if (transfer) txtPaid.setText(String.valueOf((long) total()));   // transfer = pas
+        if (transfer) txtPaid.setText(String.valueOf((long) controller.total()));   // transfer = uang pas
         updateChange();
     }
 
     private void updateChange() {
-        double c = Fmt.parse(txtPaid.getText()) - total();
+        double c = Fmt.parse(txtPaid.getText()) - controller.total();
         lblChange.setText(c >= 0 ? Fmt.rp(c) : "Kurang " + Fmt.rp(-c));
         lblChange.setForeground(c >= 0 ? UI.OK : UI.DANGER);
     }
 
     // ------------------------------------------------------------ bayar
     private void pay() {
-        if (cart.isEmpty()) { UI.warn(this, "Keranjang masih kosong."); return; }
-        String method = String.valueOf(cbMethod.getSelectedItem());
-        double paid = "TRANSFER".equals(method) ? total() : Fmt.parse(txtPaid.getText());
-        if (paid < total()) { UI.warn(this, "Uang yang diterima kurang dari total belanja."); return; }
-
         try {
-            List<CartItem> snapshot = new ArrayList<>(cart);
-            SaleDAO.Receipt r = saleDAO.save(cart, method, paid);   // simpan + kurangi stok (atomik)
-            showReceipt(r, snapshot, method);
-            cart.clear(); txtPaid.setText("");
+            Receipt r = controller.checkout(String.valueOf(cbMethod.getSelectedItem()), Fmt.parse(txtPaid.getText()));
+            showReceipt(r);
+            txtPaid.setText("");
             refresh();
-            warnLowStock(snapshot);
+            List<String> low = controller.lowStockAfterSale();
+            if (!low.isEmpty()) {
+                StringBuilder sb = new StringBuilder("STOK MENIPIS! Segera lapor Admin untuk pembelian:\n");
+                for (String n : low) sb.append("- ").append(n).append('\n');
+                UI.warn(this, sb.toString());
+            }
+        } catch (IllegalArgumentException e) {
+            UI.warn(this, e.getMessage());
         } catch (Exception e) {
             UI.error(this, "Transaksi gagal: " + e.getMessage());
-            loadProducts();                                          // sinkronkan stok terbaru
+            loadProducts();
         }
     }
 
-    /** Setelah penjualan, beri tahu bila ada barang terjual yang kini menipis. */
-    private void warnLowStock(List<CartItem> sold) {
-        try {
-            StringBuilder sb = new StringBuilder();
-            for (Product low : productDAO.findLowStock())
-                for (CartItem it : sold)
-                    if (it.product.id == low.id) sb.append("- ").append(low.name).append(" (sisa ").append(low.stock).append(")\n");
-            if (sb.length() > 0) UI.warn(this, "STOK MENIPIS! Segera lapor Admin untuk pembelian:\n" + sb);
-        } catch (Exception ignored) { }
-    }
-
-    private void showReceipt(SaleDAO.Receipt r, List<CartItem> items, String method) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("        STOREMATE\n     Struk Penjualan\n");
-        sb.append("--------------------------------\n");
-        sb.append("No   : ").append(r.invoiceNo).append('\n');
-        sb.append("Tgl  : ").append(r.dateTime).append('\n');
-        sb.append("Kasir: ").append(Session.get().fullName).append('\n');
-        sb.append("--------------------------------\n");
-        for (CartItem it : items) {
-            sb.append(it.product.name).append('\n');
-            sb.append(String.format("  %d x %-9s %12s%n", it.qty, Fmt.num(it.product.sellPrice), Fmt.num(it.subtotal())));
-        }
-        sb.append("--------------------------------\n");
-        sb.append(String.format("%-14s %17s%n", "TOTAL", Fmt.rp(r.total)));
-        sb.append(String.format("%-14s %17s%n", "Bayar (" + method + ")", Fmt.rp(r.paid)));
-        sb.append(String.format("%-14s %17s%n", "Kembali", Fmt.rp(r.change)));
-        sb.append("--------------------------------\n   Terima kasih atas kunjungan\n");
-
-        JTextArea area = new JTextArea(sb.toString());
+    private void showReceipt(Receipt r) {
+        JTextArea area = new JTextArea(controller.receiptText(r));
         area.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         area.setEditable(false);
         Object[] opts = {"Cetak", "Tutup"};
@@ -236,7 +191,6 @@ public class PosPanel extends JPanel implements Refreshable {
         }
     }
 
-    /** Pembantu: DocumentListener satu aksi. */
     private static DocumentListener simple(Runnable r) {
         return new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { r.run(); }

@@ -1,25 +1,25 @@
 package com.storemate.view;
 
-import com.storemate.dao.ReportDAO;
+import com.storemate.controller.ReportController;
+import com.storemate.model.ReportRow;
 import com.storemate.util.*;
 import java.awt.*;
 import java.io.File;
-import java.io.PrintWriter;
 import java.time.LocalDate;
-import java.util.List;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
 /**
- * Laporan penjualan & laba rugi per rentang tanggal.
- * Laba bersih = SUM(harga jual x qty) - SUM(harga beli x qty), memakai harga saat transaksi.
+ * VIEW Laporan Laba Rugi (rekap harian / bulanan + filter tanggal + ekspor CSV).
+ * Laba bersih = penjualan - HPP, dihitung oleh ReportController/ReportDAO.
  */
 public class ReportPanel extends JPanel implements Refreshable {
-    private final ReportDAO dao = new ReportDAO();
-    private final DefaultTableModel model = UI.model("Tanggal", "Jml Transaksi", "Penjualan", "Harga Pokok (HPP)", "Laba / Rugi");
+    private final ReportController controller = new ReportController();
+    private final DefaultTableModel model = UI.model("Periode", "Jml Transaksi", "Penjualan", "Harga Pokok (HPP)", "Laba / Rugi");
     private final JTextField txtFrom = new JTextField(10), txtTo = new JTextField(10);
+    private final JComboBox<String> cbMode = new JComboBox<>(new String[]{"Harian", "Bulanan"});
     private final JLabel lblSum = new JLabel(" ");
-    private List<ReportDAO.Row> rows;
+    private ReportController.Result result;
 
     public ReportPanel() {
         setLayout(new BorderLayout(10, 10));
@@ -33,6 +33,7 @@ public class ReportPanel extends JPanel implements Refreshable {
         f.setOpaque(false);
         f.add(new JLabel("Dari (yyyy-MM-dd):")); f.add(txtFrom);
         f.add(new JLabel("Sampai:")); f.add(txtTo);
+        f.add(new JLabel("Rekap:")); f.add(cbMode);
         JButton show = UI.button("Tampilkan", UI.PRIMARY), today = UI.button("Hari Ini", UI.PRIMARY),
                 month = UI.button("Bulan Ini", UI.PRIMARY), exp = UI.button("Ekspor CSV", UI.OK);
         show.addActionListener(e -> load());
@@ -56,37 +57,26 @@ public class ReportPanel extends JPanel implements Refreshable {
     }
 
     private void load() {
-        java.sql.Date from, to;
         try {
-            from = java.sql.Date.valueOf(txtFrom.getText().trim());
-            to = java.sql.Date.valueOf(txtTo.getText().trim());
-        } catch (IllegalArgumentException e) { UI.warn(this, "Format tanggal harus yyyy-MM-dd, contoh 2026-10-25."); return; }
-        if (from.after(to)) { UI.warn(this, "Tanggal awal tidak boleh melewati tanggal akhir."); return; }
-
-        try {
-            rows = dao.daily(from, to);
+            result = controller.build(txtFrom.getText(), txtTo.getText(), cbMode.getSelectedIndex() == 1);
             model.setRowCount(0);
-            double rev = 0, cogs = 0; int trx = 0;
-            for (ReportDAO.Row r : rows) {
+            for (ReportRow r : result.rows)
                 model.addRow(new Object[]{r.date, r.trx, Fmt.rp(r.revenue), Fmt.rp(r.cogs), Fmt.rp(r.profit())});
-                rev += r.revenue; cogs += r.cogs; trx += r.trx;
-            }
-            double profit = rev - cogs;
+            double profit = result.profit();
             lblSum.setText(String.format("Transaksi: %d   |   Penjualan: %s   |   %s: %s",
-                    trx, Fmt.rp(rev), profit >= 0 ? "LABA BERSIH" : "RUGI", Fmt.rp(Math.abs(profit))));
+                    result.trx, Fmt.rp(result.revenue), profit >= 0 ? "LABA BERSIH" : "RUGI", Fmt.rp(Math.abs(profit))));
             lblSum.setForeground(profit >= 0 ? UI.OK : UI.DANGER);
+        } catch (IllegalArgumentException e) { UI.warn(this, e.getMessage());
         } catch (Exception e) { UI.error(this, "Gagal memuat laporan: " + e.getMessage()); }
     }
 
     private void export() {
-        if (rows == null || rows.isEmpty()) { UI.warn(this, "Tidak ada data untuk diekspor."); return; }
+        if (result == null || result.rows.isEmpty()) { UI.warn(this, "Tidak ada data untuk diekspor."); return; }
         JFileChooser fc = new JFileChooser();
         fc.setSelectedFile(new File("laporan_" + txtFrom.getText() + "_" + txtTo.getText() + ".csv"));
         if (fc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
-        try (PrintWriter w = new PrintWriter(fc.getSelectedFile(), "UTF-8")) {
-            w.println("Tanggal,Jumlah Transaksi,Penjualan,HPP,Laba");
-            for (ReportDAO.Row r : rows)
-                w.println(r.date + "," + r.trx + "," + (long) r.revenue + "," + (long) r.cogs + "," + (long) r.profit());
+        try {
+            controller.exportCsv(result, fc.getSelectedFile());
             UI.info(this, "Laporan berhasil diekspor.");
         } catch (Exception e) { UI.error(this, "Gagal ekspor: " + e.getMessage()); }
     }

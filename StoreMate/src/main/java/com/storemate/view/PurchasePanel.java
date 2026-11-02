@@ -1,29 +1,27 @@
 package com.storemate.view;
 
-import com.storemate.dao.ProductDAO;
-import com.storemate.dao.PurchaseDAO;
-import com.storemate.dao.SupplierDAO;
+import com.storemate.controller.PurchaseController;
 import com.storemate.model.Product;
+import com.storemate.model.PurchaseLine;
 import com.storemate.model.Supplier;
 import com.storemate.util.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
-/** Purchase Order / barang masuk dari supplier. Menyimpan = stok barang otomatis bertambah. */
+/** VIEW Pembelian / Purchase Order. Daftar barang PO dan penyimpanan dikelola PurchaseController. */
 public class PurchasePanel extends JPanel implements Refreshable {
-    private final PurchaseDAO purchaseDAO = new PurchaseDAO();
+    private final PurchaseController controller = new PurchaseController();
     private final JComboBox<Supplier> cbSupplier = new JComboBox<>();
     private final JComboBox<Product> cbProduct = new JComboBox<>();
     private final JTextField txtQty = new JTextField("1", 6), txtPrice = new JTextField(10);
     private final DefaultTableModel model = UI.model("Kode", "Barang", "Qty", "Harga Beli", "Subtotal");
     private final JTable table = UI.table(model);
     private final JLabel lblTotal = new JLabel("Rp 0");
-    private final List<PurchaseDAO.Line> lines = new ArrayList<>();
+    private final Runnable onSaved;      // dipanggil setelah PO tersimpan (mis. memuat ulang Dashboard & Data Barang)
 
-    public PurchasePanel() {
+    public PurchasePanel(Runnable onSaved) {
+        this.onSaved = onSaved;
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
         setBackground(UI.BG);
@@ -58,7 +56,7 @@ public class PurchasePanel extends JPanel implements Refreshable {
         JButton rem = UI.button("Hapus Baris", UI.WARN), save = UI.button("Simpan Pembelian", UI.OK);
         rem.addActionListener(e -> {
             int r = table.getSelectedRow();
-            if (r >= 0) { lines.remove(r); reload(); }
+            if (r >= 0) { controller.removeLine(r); reload(); }
         });
         save.addActionListener(e -> save());
         bottom.add(rem); bottom.add(new JLabel("Total:")); bottom.add(lblTotal); bottom.add(save);
@@ -68,43 +66,34 @@ public class PurchasePanel extends JPanel implements Refreshable {
     @Override public void refresh() {
         try {
             cbSupplier.removeAllItems();
-            for (Supplier s : new SupplierDAO().findAll()) cbSupplier.addItem(s);
+            for (Supplier s : controller.suppliers()) cbSupplier.addItem(s);
             cbProduct.removeAllItems();
-            for (Product p : new ProductDAO().findAll("")) cbProduct.addItem(p);
+            for (Product p : controller.products()) cbProduct.addItem(p);
+            reload();
         } catch (Exception e) { UI.error(this, "Gagal memuat data: " + e.getMessage()); }
     }
 
     private void addLine() {
-        Product p = (Product) cbProduct.getSelectedItem();
-        if (p == null) { UI.warn(this, "Pilih barang terlebih dahulu."); return; }
-        int qty; double price;
         try {
-            qty = Integer.parseInt(txtQty.getText().trim());
-            price = Double.parseDouble(txtPrice.getText().trim());
-        } catch (NumberFormatException e) { UI.warn(this, "Qty dan harga beli harus berupa angka."); return; }
-        if (qty <= 0 || price < 0) { UI.warn(this, "Qty harus > 0 dan harga tidak boleh negatif."); return; }
-        lines.add(new PurchaseDAO.Line(p, qty, price));
-        reload();
+            controller.addLine((Product) cbProduct.getSelectedItem(), txtQty.getText(), txtPrice.getText());
+            reload();
+        } catch (IllegalArgumentException e) { UI.warn(this, e.getMessage()); }
     }
 
     private void reload() {
         model.setRowCount(0);
-        double total = 0;
-        for (PurchaseDAO.Line l : lines) {
+        for (PurchaseLine l : controller.lines())
             model.addRow(new Object[]{l.product.code, l.product.name, l.qty, Fmt.rp(l.price), Fmt.rp(l.subtotal())});
-            total += l.subtotal();
-        }
-        lblTotal.setText(Fmt.rp(total));
+        lblTotal.setText(Fmt.rp(controller.total()));
     }
 
     private void save() {
-        Supplier s = (Supplier) cbSupplier.getSelectedItem();
-        if (s == null) { UI.warn(this, "Tambahkan data supplier terlebih dahulu."); return; }
-        if (lines.isEmpty()) { UI.warn(this, "Daftar barang masih kosong."); return; }
         try {
-            String po = purchaseDAO.save(s.id, lines);
+            String po = controller.save((Supplier) cbSupplier.getSelectedItem());
             UI.info(this, "Pembelian tersimpan (" + po + ").\nStok barang telah bertambah otomatis.");
-            lines.clear(); reload(); refresh();
+            refresh();
+            if (onSaved != null) onSaved.run();
+        } catch (IllegalArgumentException e) { UI.warn(this, e.getMessage());
         } catch (Exception e) { UI.error(this, "Gagal menyimpan pembelian: " + e.getMessage()); }
     }
 }

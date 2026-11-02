@@ -1,10 +1,9 @@
 package com.storemate.view;
 
-import com.storemate.dao.ProductDAO;
+import com.storemate.controller.ProductController;
 import com.storemate.model.Product;
 import com.storemate.util.*;
 import java.awt.*;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
@@ -12,11 +11,11 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 /**
- * Daftar + CRUD barang. canEdit=false (Kasir) -> tombol tambah/edit/hapus tidak ditampilkan.
- * Baris dengan stok <= batas minimum diberi warna merah dan label "Stok Menipis".
+ * VIEW Data Barang. canEdit=false (Kasir) -> tombol tambah/edit/hapus tidak ditampilkan.
+ * Validasi & penyimpanan dilakukan ProductController.
  */
 public class ProductPanel extends JPanel implements Refreshable {
-    private final ProductDAO dao = new ProductDAO();
+    private final ProductController controller = new ProductController();
     private final DefaultTableModel model = new DefaultTableModel(
             new String[]{"Foto", "Kode", "Nama Barang", "Kategori", "Harga Beli", "Harga Jual", "Stok", "Batas Min", "Status"}, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -43,7 +42,6 @@ public class ProductPanel extends JPanel implements Refreshable {
         top.add(find);
         add(top, BorderLayout.NORTH);
 
-        // Renderer: merah bila stok menipis
         DefaultTableCellRenderer r = new DefaultTableCellRenderer() {
             @Override public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row, int col) {
                 Component c = super.getTableCellRendererComponent(t, v, sel, foc, row, col);
@@ -55,7 +53,7 @@ public class ProductPanel extends JPanel implements Refreshable {
             }
         };
         table.setDefaultRenderer(Object.class, r);
-        table.setRowHeight(52);                                   // ruang untuk thumbnail
+        table.setRowHeight(52);
         table.getColumnModel().getColumn(0).setPreferredWidth(60);
         table.getColumnModel().getColumn(0).setMaxWidth(70);
         add(new JScrollPane(table), BorderLayout.CENTER);
@@ -80,11 +78,12 @@ public class ProductPanel extends JPanel implements Refreshable {
 
     @Override public void refresh() {
         try {
-            current = dao.findAll(txtSearch.getText());
+            current = controller.list(txtSearch.getText());
             model.setRowCount(0);
             for (Product p : current) {
-                model.addRow(new Object[]{ImageUtil.iconPath(p.imagePath, 46), p.code, p.name, p.category, Fmt.rp(p.buyPrice), Fmt.rp(p.sellPrice),
-                        p.stock, p.minStock, p.isLowStock() ? "Stok Menipis" : "Aman"});
+                model.addRow(new Object[]{ImageUtil.iconPath(p.imagePath, 46), p.code, p.name, p.category,
+                        Fmt.rp(p.buyPrice), Fmt.rp(p.sellPrice), p.stock, p.minStock,
+                        p.isLowStock() ? "Stok Menipis" : "Aman"});
             }
         } catch (Exception e) {
             UI.error(this, "Gagal memuat barang: " + e.getMessage());
@@ -96,17 +95,16 @@ public class ProductPanel extends JPanel implements Refreshable {
         if (p == null) return;
         if (!UI.confirm(this, "Hapus barang \"" + p.name + "\"?")) return;       // konfirmasi hapus
         try {
-            dao.delete(p.id);
-            ImageUtil.delete(p.imagePath);                    // bersihkan file foto
+            controller.delete(p);
             refresh();
-        } catch (SQLIntegrityConstraintViolationException e) {
-            UI.error(this, "Barang tidak dapat dihapus karena sudah memiliki riwayat transaksi.");
+        } catch (IllegalStateException e) {
+            UI.error(this, e.getMessage());
         } catch (Exception e) {
             UI.error(this, "Gagal menghapus: " + e.getMessage());
         }
     }
 
-    /** Form tambah (existing == null) atau edit. */
+    /** Form tambah (existing == null) atau edit. View hanya mengumpulkan input. */
     private void form(Product existing) {
         JTextField code = new JTextField(existing == null ? "" : existing.code, 18);
         JTextField name = new JTextField(existing == null ? "" : existing.name);
@@ -118,8 +116,7 @@ public class ProductPanel extends JPanel implements Refreshable {
         JTextField stock = new JTextField(existing == null ? "0" : String.valueOf(existing.stock));
         JTextField min = new JTextField(existing == null ? "5" : String.valueOf(existing.minStock));
 
-        // ---- Foto produk (disimpan ke database sebagai BLOB) ----
-        // Foto baru ditahan di memori dulu; baru ditulis ke folder images/ saat tombol OK dan data tersimpan
+        // Foto baru ditahan di memori; ditulis ke folder images/ oleh Controller saat data disimpan
         final byte[][] pending = {null};
         final boolean[] removed = {false};
         JLabel preview = new JLabel(ImageUtil.iconPath(existing == null ? null : existing.imagePath, 110), SwingConstants.CENTER);
@@ -131,7 +128,7 @@ public class ProductPanel extends JPanel implements Refreshable {
             fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Gambar (JPG, PNG, GIF)", "jpg", "jpeg", "png", "gif"));
             if (fc.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
             try {
-                pending[0] = ImageUtil.toJpegBytes(fc.getSelectedFile(), 300);   // dikecilkan otomatis
+                pending[0] = controller.prepareImage(fc.getSelectedFile());
                 removed[0] = false;
                 preview.setIcon(ImageUtil.iconBytes(pending[0], 110));
             } catch (java.io.IOException ex) { UI.error(this, ex.getMessage()); }
@@ -156,46 +153,19 @@ public class ProductPanel extends JPanel implements Refreshable {
             int ok = JOptionPane.showConfirmDialog(this, p, existing == null ? "Tambah Barang" : "Edit Barang",
                     JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
             if (ok != JOptionPane.OK_OPTION) return;
-
-            // ---- Validasi input ----
-            if (code.getText().trim().isEmpty() || name.getText().trim().isEmpty()) {
-                UI.warn(this, "Kode dan nama barang wajib diisi."); continue;
-            }
-            Product np = existing == null ? new Product() : existing;
             try {
-                np.buyPrice = Double.parseDouble(buy.getText().trim());
-                np.sellPrice = Double.parseDouble(sell.getText().trim());
-                np.stock = Integer.parseInt(stock.getText().trim());
-                np.minStock = Integer.parseInt(min.getText().trim());
-            } catch (NumberFormatException ex) {
-                UI.warn(this, "Harga, stok, dan batas minimum harus berupa angka."); continue;
-            }
-            if (np.buyPrice < 0 || np.sellPrice < 0 || np.stock < 0 || np.minStock < 0) {
-                UI.warn(this, "Nilai tidak boleh negatif."); continue;
-            }
-            if (np.sellPrice < np.buyPrice && !UI.confirm(this, "Harga jual lebih rendah dari harga beli (rugi). Lanjutkan?")) continue;
-
-            np.code = code.getText().trim();
-            np.name = name.getText().trim();
-            np.category = String.valueOf(cat.getSelectedItem()).trim();
-            String oldPath = existing == null ? null : existing.imagePath;
-            String stored = null;
-            try {
-                np.imagePath = oldPath;
-                if (pending[0] != null) { stored = ImageUtil.store(pending[0], np.code); np.imagePath = stored; }
-                else if (removed[0]) np.imagePath = null;
-                if (existing == null) dao.insert(np); else dao.update(np);
-                if (oldPath != null && !oldPath.equals(np.imagePath)) ImageUtil.delete(oldPath);  // buang foto lama
+                Product np = controller.validate(existing, code.getText(), name.getText(),
+                        String.valueOf(cat.getSelectedItem()), buy.getText(), sell.getText(),
+                        stock.getText(), min.getText());
+                if (np.sellPrice < np.buyPrice && !UI.confirm(this, "Harga jual lebih rendah dari harga beli (rugi). Lanjutkan?")) continue;
+                controller.save(np, existing == null, pending[0], removed[0]);
                 refresh();
                 return;
-            } catch (SQLIntegrityConstraintViolationException ex) {
-                if (stored != null) ImageUtil.delete(stored);       // batalkan file yang sudah terlanjur ditulis
-                np.imagePath = oldPath;
-                UI.warn(this, "Kode barang \"" + np.code + "\" sudah dipakai barang lain.");
+            } catch (IllegalArgumentException ex) {          // validasi / kode ganda -> form tetap terbuka
+                UI.warn(this, ex.getMessage());
             } catch (Exception ex) {
-                if (stored != null) ImageUtil.delete(stored);
-                np.imagePath = oldPath;
-                UI.error(this, "Gagal menyimpan: " + ex.getMessage()); return;
+                UI.error(this, "Gagal menyimpan: " + ex.getMessage());
+                return;
             }
         }
     }

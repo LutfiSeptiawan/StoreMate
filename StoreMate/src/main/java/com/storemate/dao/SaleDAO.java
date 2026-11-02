@@ -2,6 +2,7 @@ package com.storemate.dao;
 
 import com.storemate.config.DBConnection;
 import com.storemate.model.CartItem;
+import com.storemate.model.Receipt;
 import com.storemate.util.Session;
 import java.sql.*;
 import java.text.SimpleDateFormat;
@@ -10,12 +11,6 @@ import java.util.List;
 
 /** Menyimpan transaksi POS dalam SATU transaksi database (atomik). */
 public class SaleDAO {
-
-    /** Hasil transaksi untuk dicetak di struk. */
-    public static class Receipt {
-        public String invoiceNo, dateTime;
-        public double total, paid, change;
-    }
 
     /**
      * Alur: insert header -> untuk tiap item kurangi stok (hanya jika stok cukup)
@@ -34,7 +29,7 @@ public class SaleDAO {
                         "INSERT INTO sales(invoice_no,user_id,payment_method) VALUES(?,?,?)",
                         Statement.RETURN_GENERATED_KEYS)) {
                     ps.setString(1, invoice);
-                    ps.setInt(2, Session.get().id);
+                    ps.setInt(2, Session.get().getId());
                     ps.setString(3, method);
                     ps.executeUpdate();
                     try (ResultSet k = ps.getGeneratedKeys()) { k.next(); saleId = k.getInt(1); }

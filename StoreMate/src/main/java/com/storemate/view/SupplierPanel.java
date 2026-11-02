@@ -1,18 +1,17 @@
 package com.storemate.view;
 
-import com.storemate.dao.SupplierDAO;
+import com.storemate.controller.SupplierController;
 import com.storemate.model.Supplier;
 import com.storemate.util.*;
 import java.awt.*;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
-/** Pencatatan data supplier (khusus Admin). */
+/** VIEW Supplier (khusus Admin). Logika ada di SupplierController. */
 public class SupplierPanel extends JPanel implements Refreshable {
-    private final SupplierDAO dao = new SupplierDAO();
+    private final SupplierController controller = new SupplierController();
     private final DefaultTableModel model = UI.model("Nama Supplier", "Telepon", "Alamat");
     private final JTable table = UI.table(model);
     private final JTextField txtName = new JTextField(), txtPhone = new JTextField(), txtAddr = new JTextField();
@@ -55,7 +54,7 @@ public class SupplierPanel extends JPanel implements Refreshable {
 
     @Override public void refresh() {
         try {
-            current = dao.findAll();
+            current = controller.list();
             model.setRowCount(0);
             for (Supplier s : current) model.addRow(new Object[]{s.name, s.phone, s.address});
         } catch (Exception e) { UI.error(this, "Gagal memuat supplier: " + e.getMessage()); }
@@ -67,12 +66,10 @@ public class SupplierPanel extends JPanel implements Refreshable {
     }
 
     private void save() {
-        if (txtName.getText().trim().isEmpty()) { UI.warn(this, "Nama supplier wajib diisi."); return; }
-        Supplier s = editing == null ? new Supplier() : editing;
-        s.name = txtName.getText().trim(); s.phone = txtPhone.getText().trim(); s.address = txtAddr.getText().trim();
         try {
-            if (editing == null) dao.insert(s); else dao.update(s);
+            controller.save(editing, txtName.getText(), txtPhone.getText(), txtAddr.getText());
             clearForm(); refresh();
+        } catch (IllegalArgumentException e) { UI.warn(this, e.getMessage());
         } catch (Exception e) { UI.error(this, "Gagal menyimpan: " + e.getMessage()); }
     }
 
@@ -80,9 +77,8 @@ public class SupplierPanel extends JPanel implements Refreshable {
         if (editing == null) { UI.warn(this, "Pilih supplier pada tabel."); return; }
         if (!UI.confirm(this, "Hapus supplier \"" + editing.name + "\"?")) return;
         try {
-            dao.delete(editing.id); clearForm(); refresh();
-        } catch (SQLIntegrityConstraintViolationException e) {
-            UI.error(this, "Supplier tidak dapat dihapus karena sudah memiliki riwayat pembelian.");
+            controller.delete(editing); clearForm(); refresh();
+        } catch (IllegalStateException e) { UI.error(this, e.getMessage());
         } catch (Exception e) { UI.error(this, "Gagal menghapus: " + e.getMessage()); }
     }
 }
