@@ -1,4 +1,10 @@
 C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\config\DBConnection.java
+C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\controller\LoginController.java
+C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\controller\PosController.java
+C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\controller\ProductController.java
+C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\controller\PurchaseController.java
+C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\controller\ReportController.java
+C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\controller\SupplierController.java
 C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\dao\ProductDAO.java
 C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\dao\PurchaseDAO.java
 C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\dao\ReportDAO.java
@@ -8,11 +14,15 @@ C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storem
 C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\Main.java
 C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\model\CartItem.java
 C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\model\Product.java
+C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\model\PurchaseLine.java
+C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\model\Receipt.java
+C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\model\ReportRow.java
 C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\model\Supplier.java
 C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\model\User.java
 C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\util\Fmt.java
 C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\util\Hash.java
 C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\util\ImageUtil.java
+C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\util\JpaUtil.java
 C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\util\Refreshable.java
 C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\util\Session.java
 C:\Users\HP\OneDrive\Dokumen\NetBeansProjects\StoreMate\src\main\java\com\storemate\util\UI.java

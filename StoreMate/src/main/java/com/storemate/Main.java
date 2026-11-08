@@ -1,5 +1,6 @@
 package com.storemate;
 
+import com.storemate.util.JpaUtil;
 import com.storemate.view.LoginFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -11,6 +12,7 @@ public class Main {
             // Look & Feel lintas-platform agar warna tombol tampil konsisten
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
         } catch (Exception ignored) { }
+        Runtime.getRuntime().addShutdownHook(new Thread(JpaUtil::close));   // tutup EntityManagerFactory saat keluar
         SwingUtilities.invokeLater(() -> new LoginFrame().setVisible(true));
     }
 }

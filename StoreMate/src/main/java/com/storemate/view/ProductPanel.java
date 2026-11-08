@@ -139,18 +139,27 @@ public class ProductPanel extends JPanel implements Refreshable {
         pb.add(pick); pb.add(noPic);
         photo.add(preview, BorderLayout.CENTER); photo.add(pb, BorderLayout.EAST);
 
-        JPanel p = new JPanel(new GridLayout(0, 2, 8, 8));
-        p.add(new JLabel("Foto Produk")); p.add(photo);
-        p.add(new JLabel("Kode Barang")); p.add(code);
-        p.add(new JLabel("Nama Barang")); p.add(name);
-        p.add(new JLabel("Kategori")); p.add(cat);
-        p.add(new JLabel("Harga Beli")); p.add(buy);
-        p.add(new JLabel("Harga Jual")); p.add(sell);
-        p.add(new JLabel("Stok")); p.add(stock);
-        p.add(new JLabel("Batas Minimum Stok")); p.add(min);
+        // Tata letak formulir: tinggi tiap baris mengikuti isinya (bukan disamakan seperti GridLayout)
+        JPanel p = new JPanel(new GridBagLayout());
+        int row = 0;
+        row = addRow(p, row, "Foto Produk", photo);
+        row = addRow(p, row, "Kode Barang", code);
+        row = addRow(p, row, "Nama Barang", name);
+        row = addRow(p, row, "Kategori", cat);
+        row = addRow(p, row, "Harga Beli", buy);
+        row = addRow(p, row, "Harga Jual", sell);
+        row = addRow(p, row, "Stok", stock);
+        addRow(p, row, "Batas Minimum Stok", min);
+
+        // Dibungkus scroll agar tetap muat di layar kecil / skala tampilan besar
+        JScrollPane formScroll = new JScrollPane(p, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        formScroll.setBorder(null);
+        Dimension pref = p.getPreferredSize();
+        formScroll.setPreferredSize(new Dimension(pref.width + 24, Math.min(pref.height + 4, 480)));
 
         while (true) {
-            int ok = JOptionPane.showConfirmDialog(this, p, existing == null ? "Tambah Barang" : "Edit Barang",
+            int ok = JOptionPane.showConfirmDialog(this, formScroll, existing == null ? "Tambah Barang" : "Edit Barang",
                     JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
             if (ok != JOptionPane.OK_OPTION) return;
             try {
@@ -168,5 +177,17 @@ public class ProductPanel extends JPanel implements Refreshable {
                 return;
             }
         }
+    }
+
+    /** Menambah satu baris "label + isian" pada form GridBagLayout; mengembalikan nomor baris berikutnya. */
+    private static int addRow(JPanel panel, int row, String label, Component field) {
+        GridBagConstraints l = new GridBagConstraints();
+        l.gridx = 0; l.gridy = row; l.anchor = GridBagConstraints.WEST; l.insets = new Insets(5, 4, 5, 14);
+        panel.add(new JLabel(label), l);
+        GridBagConstraints f = new GridBagConstraints();
+        f.gridx = 1; f.gridy = row; f.weightx = 1.0; f.fill = GridBagConstraints.HORIZONTAL;
+        f.insets = new Insets(5, 0, 5, 4);
+        panel.add(field, f);
+        return row + 1;
     }
 }
