@@ -10,7 +10,7 @@ import javax.swing.table.DefaultTableModel;
 
 /** VIEW Dashboard Admin. Semua data diminta dari ReportController. */
 public class DashboardPanel extends JPanel implements Refreshable {
-    private final ReportController controller = new ReportController();
+    private final ReportController controller = AppContext.get(ReportController.class);
     private final JLabel lblSales = new JLabel("-"), lblTrx = new JLabel("-"), lblLow = new JLabel("-");
     private final JLabel lblAlert = new JLabel(" ");
     private final BarChart chart = new BarChart();

@@ -11,7 +11,7 @@ import javax.swing.table.DefaultTableModel;
 
 /** VIEW Pembelian / Purchase Order. Daftar barang PO dan penyimpanan dikelola PurchaseController. */
 public class PurchasePanel extends JPanel implements Refreshable {
-    private final PurchaseController controller = new PurchaseController();
+    private final PurchaseController controller = AppContext.get(PurchaseController.class);
     private final JComboBox<Supplier> cbSupplier = new JComboBox<>();
     private final JComboBox<Product> cbProduct = new JComboBox<>();
     private final JTextField txtQty = new JTextField("1", 6), txtPrice = new JTextField(10);

@@ -1,5 +1,8 @@
 package com.storemate.controller;
 
+import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Scope;
+
 import com.storemate.dao.ProductDAO;
 import com.storemate.dao.PurchaseDAO;
 import com.storemate.dao.SupplierDAO;
@@ -12,12 +15,20 @@ import java.util.Collections;
 import java.util.List;
 
 /** CONTROLLER: Purchase Order. Menyimpan PO otomatis menambah stok (dilakukan di PurchaseDAO). */
+@Component
+@Scope("prototype")   // satu objek baru per pemanggilan (menyimpan state keranjang)
 public class PurchaseController {
-    private final PurchaseDAO purchaseDAO = new PurchaseDAO();
+    private final PurchaseDAO purchaseDAO;
+    private final SupplierDAO supplierDAO;
+    private final ProductDAO productDAO;
+
+    public PurchaseController(PurchaseDAO purchaseDAO, SupplierDAO supplierDAO, ProductDAO productDAO) {
+        this.purchaseDAO = purchaseDAO; this.supplierDAO = supplierDAO; this.productDAO = productDAO;
+    }
     private final List<PurchaseLine> lines = new ArrayList<>();
 
-    public List<Supplier> suppliers() throws SQLException { return new SupplierDAO().findAll(); }
-    public List<Product> products() throws SQLException { return new ProductDAO().findAll(""); }
+    public List<Supplier> suppliers() throws SQLException { return supplierDAO.findAll(); }
+    public List<Product> products() throws SQLException { return productDAO.findAll(""); }
     public List<PurchaseLine> lines() { return Collections.unmodifiableList(lines); }
 
     public double total() {

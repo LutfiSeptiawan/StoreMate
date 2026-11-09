@@ -1,5 +1,7 @@
 package com.storemate.controller;
 
+import org.springframework.stereotype.Component;
+
 import com.storemate.dao.UserDAO;
 import com.storemate.model.User;
 import com.storemate.util.Session;
@@ -8,8 +10,12 @@ import com.storemate.view.MainFrame;
 import java.sql.SQLException;
 
 /** CONTROLLER: alur login/logout. View hanya meneruskan input & menampilkan hasil. */
+@Component
 public class LoginController {
-    private final UserDAO dao = new UserDAO();
+    private final UserDAO dao;
+
+    /** Constructor injection: Spring menyuntikkan UserDAO. */
+    public LoginController(UserDAO dao) { this.dao = dao; }
 
     /**
      * @throws IllegalArgumentException input kosong atau username/password salah (pesan siap tampil)

@@ -1,5 +1,7 @@
 package com.storemate.controller;
 
+import org.springframework.stereotype.Component;
+
 import com.storemate.dao.ProductDAO;
 import com.storemate.dao.ReportDAO;
 import com.storemate.model.Product;
@@ -12,9 +14,12 @@ import java.util.Calendar;
 import java.util.List;
 
 /** CONTROLLER: data Dashboard dan Laporan Laba Rugi. */
+@Component
 public class ReportController {
-    private final ReportDAO dao = new ReportDAO();
-    private final ProductDAO productDAO = new ProductDAO();
+    private final ReportDAO dao;
+    private final ProductDAO productDAO;
+
+    public ReportController(ReportDAO dao, ProductDAO productDAO) { this.dao = dao; this.productDAO = productDAO; }
 
     /** Hasil laporan + total keseluruhan. */
     public static class Result {

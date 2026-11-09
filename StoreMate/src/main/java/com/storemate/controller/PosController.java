@@ -1,5 +1,8 @@
 package com.storemate.controller;
 
+import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Scope;
+
 import com.storemate.dao.ProductDAO;
 import com.storemate.dao.SaleDAO;
 import com.storemate.model.CartItem;
@@ -13,9 +16,13 @@ import java.util.Collections;
 import java.util.List;
 
 /** CONTROLLER: keranjang belanja & proses pembayaran POS. View hanya menampilkan isi keranjang. */
+@Component
+@Scope("prototype")   // satu objek baru per pemanggilan (menyimpan state keranjang)
 public class PosController {
-    private final ProductDAO productDAO = new ProductDAO();
-    private final SaleDAO saleDAO = new SaleDAO();
+    private final ProductDAO productDAO;
+    private final SaleDAO saleDAO;
+
+    public PosController(ProductDAO productDAO, SaleDAO saleDAO) { this.productDAO = productDAO; this.saleDAO = saleDAO; }
     private final List<CartItem> cart = new ArrayList<>();
     private List<CartItem> lastSold = new ArrayList<>();
     private String lastMethod = "TUNAI";

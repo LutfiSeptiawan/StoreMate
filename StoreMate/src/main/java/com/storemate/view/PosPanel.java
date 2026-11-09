@@ -15,7 +15,7 @@ import javax.swing.table.DefaultTableModel;
 
 /** VIEW Kasir (POS). Keranjang & pembayaran dikelola PosController; panel ini hanya menampilkan. */
 public class PosPanel extends JPanel implements Refreshable {
-    private final PosController controller = new PosController();
+    private final PosController controller = AppContext.get(PosController.class);
 
     private final JTextField txtSearch = new JTextField(20);
     private final JPanel grid = new JPanel(new GridLayout(0, 3, 8, 8));

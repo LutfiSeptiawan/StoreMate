@@ -11,7 +11,7 @@ import javax.swing.table.DefaultTableModel;
 
 /** VIEW Supplier (khusus Admin). Logika ada di SupplierController. */
 public class SupplierPanel extends JPanel implements Refreshable {
-    private final SupplierController controller = new SupplierController();
+    private final SupplierController controller = AppContext.get(SupplierController.class);
     private final DefaultTableModel model = UI.model("Nama Supplier", "Telepon", "Alamat");
     private final JTable table = UI.table(model);
     private final JTextField txtName = new JTextField(), txtPhone = new JTextField(), txtAddr = new JTextField();

@@ -14,7 +14,7 @@ import javax.swing.table.DefaultTableModel;
  * Laba bersih = penjualan - HPP, dihitung oleh ReportController/ReportDAO.
  */
 public class ReportPanel extends JPanel implements Refreshable {
-    private final ReportController controller = new ReportController();
+    private final ReportController controller = AppContext.get(ReportController.class);
     private final DefaultTableModel model = UI.model("Periode", "Jml Transaksi", "Penjualan", "Harga Pokok (HPP)", "Laba / Rugi");
     private final JTextField txtFrom = new JTextField(10), txtTo = new JTextField(10);
     private final JComboBox<String> cbMode = new JComboBox<>(new String[]{"Harian", "Bulanan"});

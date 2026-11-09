@@ -2,6 +2,7 @@ package com.storemate.view;
 
 import com.storemate.controller.LoginController;
 import com.storemate.model.User;
+import com.storemate.util.AppContext;
 import com.storemate.util.UI;
 import java.awt.*;
 import javax.swing.*;
@@ -13,7 +14,7 @@ import javax.swing.*;
 public class LoginFrame extends JFrame {
     private final JTextField txtUser = UI.textField();
     private final JPasswordField txtPass = UI.passwordField();
-    private final LoginController controller = new LoginController();   // VIEW -> CONTROLLER
+    private final LoginController controller = AppContext.get(LoginController.class);   // VIEW -> CONTROLLER (bean Spring)
 
     public LoginFrame() {
         super("StoreMate - Login");

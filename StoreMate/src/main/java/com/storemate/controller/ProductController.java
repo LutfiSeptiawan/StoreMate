@@ -1,5 +1,7 @@
 package com.storemate.controller;
 
+import org.springframework.stereotype.Component;
+
 import com.storemate.dao.ProductDAO;
 import com.storemate.model.Product;
 import com.storemate.util.ImageUtil;
@@ -10,8 +12,11 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 
 /** CONTROLLER: validasi & penyimpanan data barang (termasuk file foto). */
+@Component
 public class ProductController {
-    private final ProductDAO dao = new ProductDAO();
+    private final ProductDAO dao;
+
+    public ProductController(ProductDAO dao) { this.dao = dao; }
 
     public List<Product> list(String keyword) throws SQLException { return dao.findAll(keyword); }
     public List<Product> lowStock() throws SQLException { return dao.findLowStock(); }

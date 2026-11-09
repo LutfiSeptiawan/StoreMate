@@ -15,7 +15,7 @@ import javax.swing.table.DefaultTableModel;
  * Validasi & penyimpanan dilakukan ProductController.
  */
 public class ProductPanel extends JPanel implements Refreshable {
-    private final ProductController controller = new ProductController();
+    private final ProductController controller = AppContext.get(ProductController.class);
     private final DefaultTableModel model = new DefaultTableModel(
             new String[]{"Foto", "Kode", "Nama Barang", "Kategori", "Harga Beli", "Harga Jual", "Stok", "Batas Min", "Status"}, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }

@@ -1,54 +1,56 @@
 package com.storemate.dao;
 
-import com.storemate.config.DBConnection;
 import com.storemate.model.Supplier;
 import com.storemate.util.Session;
-import java.sql.*;
-import java.util.ArrayList;
+import java.sql.SQLException;
 import java.util.List;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
 
-/** CRUD supplier (khusus Admin). */
+/**
+ * CRUD supplier (khusus Admin) memakai Spring JDBC.
+ * JdbcTemplate membuka/menutup koneksi dan statement sendiri, sehingga tidak ada try-with-resources manual.
+ */
+@Repository
 public class SupplierDAO {
+    private final JdbcTemplate jdbc;
+
+    /** Constructor injection: JdbcTemplate dibuat otomatis oleh Spring Boot. */
+    public SupplierDAO(JdbcTemplate jdbc) { this.jdbc = jdbc; }
+
+    /** Memetakan satu baris hasil query menjadi objek Supplier. */
+    private static final RowMapper<Supplier> MAPPER = (rs, rowNum) -> {
+        Supplier s = new Supplier();
+        s.id = rs.getInt("id");
+        s.name = rs.getString("name");
+        s.phone = rs.getString("phone");
+        s.address = rs.getString("address");
+        return s;
+    };
 
     public List<Supplier> findAll() throws SQLException {
         Session.requireAdmin();
-        List<Supplier> list = new ArrayList<>();
-        try (Connection c = DBConnection.getConnection(); Statement st = c.createStatement();
-             ResultSet rs = st.executeQuery("SELECT * FROM suppliers ORDER BY name")) {
-            while (rs.next()) {
-                Supplier s = new Supplier();
-                s.id = rs.getInt("id"); s.name = rs.getString("name");
-                s.phone = rs.getString("phone"); s.address = rs.getString("address");
-                list.add(s);
-            }
-        }
-        return list;
+        return jdbc.query("SELECT * FROM suppliers ORDER BY name", MAPPER);
     }
 
     public void insert(Supplier s) throws SQLException {
         Session.requireAdmin();
-        try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement("INSERT INTO suppliers(name,phone,address) VALUES(?,?,?)")) {
-            ps.setString(1, s.name); ps.setString(2, s.phone); ps.setString(3, s.address);
-            ps.executeUpdate();
-        }
+        jdbc.update("INSERT INTO suppliers(name,phone,address) VALUES(?,?,?)", s.name, s.phone, s.address);
     }
 
     public void update(Supplier s) throws SQLException {
         Session.requireAdmin();
-        try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement("UPDATE suppliers SET name=?,phone=?,address=? WHERE id=?")) {
-            ps.setString(1, s.name); ps.setString(2, s.phone); ps.setString(3, s.address); ps.setInt(4, s.id);
-            ps.executeUpdate();
-        }
+        jdbc.update("UPDATE suppliers SET name=?,phone=?,address=? WHERE id=?", s.name, s.phone, s.address, s.id);
     }
 
     public void delete(int id) throws SQLException {
         Session.requireAdmin();
-        try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement("DELETE FROM suppliers WHERE id=?")) {
-            ps.setInt(1, id);
-            ps.executeUpdate();
+        try {
+            jdbc.update("DELETE FROM suppliers WHERE id=?", id);
+        } catch (DataAccessException e) {
+            throw SqlErrors.toSql(e);       // supplier sudah dipakai PO -> SQLIntegrityConstraintViolationException
         }
     }
 }

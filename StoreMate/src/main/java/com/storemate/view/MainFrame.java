@@ -2,6 +2,7 @@ package com.storemate.view;
 
 import com.storemate.controller.LoginController;
 import com.storemate.model.User;
+import com.storemate.util.AppContext;
 import com.storemate.util.Refreshable;
 import com.storemate.util.UI;
 import java.awt.*;
@@ -77,7 +78,7 @@ public class MainFrame extends JFrame {
         out.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         out.addActionListener(e -> {
             if (UI.confirm(this, "Keluar dari aplikasi?")) {
-                new LoginController().logout();    // hapus sesi + buka kembali form login
+                AppContext.get(LoginController.class).logout();    // hapus sesi + buka kembali form login
                 dispose();
             }
         });

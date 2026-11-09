@@ -1,5 +1,7 @@
 package com.storemate.controller;
 
+import org.springframework.stereotype.Component;
+
 import com.storemate.dao.SupplierDAO;
 import com.storemate.model.Supplier;
 import java.sql.SQLException;
@@ -7,8 +9,11 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 
 /** CONTROLLER: pengelolaan data supplier. */
+@Component
 public class SupplierController {
-    private final SupplierDAO dao = new SupplierDAO();
+    private final SupplierDAO dao;
+
+    public SupplierController(SupplierDAO dao) { this.dao = dao; }
 
     public List<Supplier> list() throws SQLException { return dao.findAll(); }
 
