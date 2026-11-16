@@ -1,8 +1,10 @@
 com\storemate\view\LoginFrame.class
+com\storemate\repository\UserRepository.class
 com\storemate\dao\ProductDAO.class
 com\storemate\view\PosPanel$1.class
 com\storemate\util\Hash.class
 com\storemate\model\Product.class
+com\storemate\repository\ProductRepository.class
 com\storemate\view\ReportPanel.class
 com\storemate\dao\SupplierDAO.class
 com\storemate\dao\ReportDAO.class
@@ -17,14 +19,13 @@ com\storemate\dao\SaleDAO.class
 com\storemate\util\Session.class
 com\storemate\model\ReportRow.class
 com\storemate\controller\SupplierController.class
+com\storemate\util\AppContext.class
 com\storemate\controller\ReportController.class
-com\storemate\config\DBConnection.class
 com\storemate\util\ImageUtil.class
 com\storemate\dao\UserDAO.class
 com\storemate\view\SupplierPanel.class
 com\storemate\view\PurchasePanel.class
 com\storemate\view\DashboardPanel$BarChart.class
-com\storemate\dao\ProductDAO$Action.class
 com\storemate\view\PosPanel.class
 com\storemate\model\CartItem.class
 com\storemate\view\MainFrame.class
@@ -37,7 +38,7 @@ com\storemate\controller\PosController.class
 com\storemate\Main.class
 com\storemate\model\PurchaseLine.class
 com\storemate\view\ProductPanel$2.class
+com\storemate\dao\SqlErrors.class
 com\storemate\view\ProductPanel.class
 com\storemate\util\UI.class
 com\storemate\dao\PurchaseDAO.class
-com\storemate\util\JpaUtil.class
