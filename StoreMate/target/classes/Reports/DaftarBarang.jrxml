@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Dibuat untuk Jaspersoft Studio 6.20 / JasperReports 6.x. Data dikirim dari aplikasi (tanpa koneksi database di laporan). -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="DaftarBarang" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenNoDataType="AllSectionsNoDetail">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+
+	<!-- Baris barang dengan stok <= batas minimum dicetak merah dan tebal -->
+	<style name="Baris" fontSize="9">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$F{stock} <= $F{min_stock}]]></conditionExpression>
+			<style forecolor="#DC2626" isBold="true"/>
+		</conditionalStyle>
+	</style>
+
+	<parameter name="PRINTED_BY" class="java.lang.String">
+		<defaultValueExpression><![CDATA["-"]]></defaultValueExpression>
+	</parameter>
+
+	<field name="code" class="java.lang.String"/>
+	<field name="name" class="java.lang.String"/>
+	<field name="category" class="java.lang.String"/>
+	<field name="buy_price" class="java.lang.Double"/>
+	<field name="sell_price" class="java.lang.Double"/>
+	<field name="stock" class="java.lang.Integer"/>
+	<field name="min_stock" class="java.lang.Integer"/>
+
+	<variable name="JUMLAH_MENIPIS" class="java.lang.Integer" calculation="Sum">
+		<variableExpression><![CDATA[($F{stock} <= $F{min_stock}) ? 1 : 0]]></variableExpression>
+		<initialValueExpression><![CDATA[0]]></initialValueExpression>
+	</variable>
+
+	<title>
+		<band height="62">
+			<staticText>
+				<reportElement x="0" y="4" width="555" height="30"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="18" isBold="true"/>
+				</textElement>
+				<text><![CDATA[StoreMate - Daftar Barang & Stok]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="0" y="36" width="555" height="16"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Dicetak: " + new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(new java.util.Date()) + "   |   Oleh: " + $P{PRINTED_BY}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="58" width="555" height="1"/>
+			</line>
+		</band>
+	</title>
+
+	<columnHeader>
+		<band height="24">
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="0" width="70" height="24" forecolor="#FFFFFF" backcolor="#2563EB"/>
+				<box leftPadding="4" rightPadding="4"><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
+				<textElement textAlignment="Left" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
+				<text><![CDATA[Kode]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="70" y="0" width="150" height="24" forecolor="#FFFFFF" backcolor="#2563EB"/>
+				<box leftPadding="4" rightPadding="4"><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
+				<textElement textAlignment="Left" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
+				<text><![CDATA[Nama Barang]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="220" y="0" width="100" height="24" forecolor="#FFFFFF" backcolor="#2563EB"/>
+				<box leftPadding="4" rightPadding="4"><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
+				<textElement textAlignment="Left" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
+				<text><![CDATA[Kategori]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="320" y="0" width="75" height="24" forecolor="#FFFFFF" backcolor="#2563EB"/>
+				<box leftPadding="4" rightPadding="4"><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
+				<text><![CDATA[Harga Beli]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="395" y="0" width="75" height="24" forecolor="#FFFFFF" backcolor="#2563EB"/>
+				<box leftPadding="4" rightPadding="4"><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
+				<text><![CDATA[Harga Jual]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="470" y="0" width="40" height="24" forecolor="#FFFFFF" backcolor="#2563EB"/>
+				<box leftPadding="4" rightPadding="4"><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
+				<text><![CDATA[Stok]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="510" y="0" width="45" height="24" forecolor="#FFFFFF" backcolor="#2563EB"/>
+				<box leftPadding="4" rightPadding="4"><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
+				<text><![CDATA[Min]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+
+	<detail>
+		<band height="22">
+			<textField isBlankWhenNull="true">
+				<reportElement style="Baris" x="0" y="0" width="70" height="22"/>
+				<box leftPadding="4" rightPadding="4"><pen lineWidth="0.5" lineColor="#E2E8F0"/></box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{code}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Baris" x="70" y="0" width="150" height="22"/>
+				<box leftPadding="4" rightPadding="4"><pen lineWidth="0.5" lineColor="#E2E8F0"/></box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{name}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Baris" x="220" y="0" width="100" height="22"/>
+				<box leftPadding="4" rightPadding="4"><pen lineWidth="0.5" lineColor="#E2E8F0"/></box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{category}]]></textFieldExpression>
+			</textField>
+			<textField pattern="Rp #,##0" isBlankWhenNull="true">
+				<reportElement style="Baris" x="320" y="0" width="75" height="22"/>
+				<box leftPadding="4" rightPadding="4"><pen lineWidth="0.5" lineColor="#E2E8F0"/></box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{buy_price}]]></textFieldExpression>
+			</textField>
+			<textField pattern="Rp #,##0" isBlankWhenNull="true">
+				<reportElement style="Baris" x="395" y="0" width="75" height="22"/>
+				<box leftPadding="4" rightPadding="4"><pen lineWidth="0.5" lineColor="#E2E8F0"/></box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{sell_price}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Baris" x="470" y="0" width="40" height="22"/>
+				<box leftPadding="4" rightPadding="4"><pen lineWidth="0.5" lineColor="#E2E8F0"/></box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{stock}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Baris" x="510" y="0" width="45" height="22"/>
+				<box leftPadding="4" rightPadding="4"><pen lineWidth="0.5" lineColor="#E2E8F0"/></box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{min_stock}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+
+	<pageFooter>
+		<band height="22">
+			<line>
+				<reportElement x="0" y="0" width="555" height="1"/>
+			</line>
+			<textField>
+				<reportElement x="355" y="4" width="150" height="15"/>
+				<textElement textAlignment="Right"><font size="8"/></textElement>
+				<textFieldExpression><![CDATA["Halaman " + $V{PAGE_NUMBER} + " dari"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="508" y="4" width="47" height="15"/>
+				<textElement textAlignment="Left"><font size="8"/></textElement>
+				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+
+	<summary>
+		<band height="44">
+			<textField>
+				<reportElement x="0" y="10" width="300" height="16"/>
+				<textElement verticalAlignment="Middle"><font size="10" isBold="true"/></textElement>
+				<textFieldExpression><![CDATA["Total jenis barang : " + $V{REPORT_COUNT}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="26" width="300" height="16" forecolor="#DC2626"/>
+				<textElement verticalAlignment="Middle"><font size="10" isBold="true"/></textElement>
+				<textFieldExpression><![CDATA["Barang stok menipis : " + $V{JUMLAH_MENIPIS}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

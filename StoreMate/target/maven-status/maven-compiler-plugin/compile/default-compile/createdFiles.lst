@@ -24,6 +24,7 @@ com\storemate\controller\ReportController.class
 com\storemate\util\ImageUtil.class
 com\storemate\dao\UserDAO.class
 com\storemate\view\SupplierPanel.class
+com\storemate\controller\PrintController.class
 com\storemate\view\PurchasePanel.class
 com\storemate\view\DashboardPanel$BarChart.class
 com\storemate\view\PosPanel.class

@@ -1,5 +1,6 @@
 package com.storemate.view;
 
+import com.storemate.controller.PrintController;
 import com.storemate.controller.ProductController;
 import com.storemate.model.Product;
 import com.storemate.util.*;
@@ -16,6 +17,7 @@ import javax.swing.table.DefaultTableModel;
  */
 public class ProductPanel extends JPanel implements Refreshable {
     private final ProductController controller = AppContext.get(ProductController.class);
+    private final PrintController printController = AppContext.get(PrintController.class);
     private final DefaultTableModel model = new DefaultTableModel(
             new String[]{"Foto", "Kode", "Nama Barang", "Kategori", "Harga Beli", "Harga Jual", "Stok", "Batas Min", "Status"}, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -65,7 +67,9 @@ public class ProductPanel extends JPanel implements Refreshable {
             add.addActionListener(e -> form(null));
             edit.addActionListener(e -> { Product p = selected(); if (p != null) form(p); });
             del.addActionListener(e -> delete());
-            bottom.add(add); bottom.add(edit); bottom.add(del);
+            JButton print = UI.button("Cetak Laporan", UI.WARN);
+            print.addActionListener(e -> printReport());
+            bottom.add(add); bottom.add(edit); bottom.add(del); bottom.add(print);
             add(bottom, BorderLayout.SOUTH);
         }
     }
@@ -87,6 +91,18 @@ public class ProductPanel extends JPanel implements Refreshable {
             }
         } catch (Exception e) {
             UI.error(this, "Gagal memuat barang: " + e.getMessage());
+        }
+    }
+
+    /** Membuka laporan Daftar Barang (JasperReports). Pembuatan laporan dilakukan PrintController. */
+    private void printReport() {
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+            printController.showDaftarBarang();
+        } catch (Exception ex) {
+            UI.error(this, "Gagal membuat laporan: " + ex.getMessage());
+        } finally {
+            setCursor(Cursor.getDefaultCursor());
         }
     }
 
